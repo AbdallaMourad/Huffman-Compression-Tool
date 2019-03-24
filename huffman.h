@@ -27,6 +27,7 @@ class Huffman{
     private:
         Node * root;
         map<char, string>generatedTable;
+        int extraBit;
 
     public:
         Huffman(string fileName);

@@ -33,6 +33,7 @@ Huffman::Huffman(string fileName){
     * compress the file 
     */
 
+    this->extraBit = 0;
     freopen(fileName.c_str(), "r", stdin);
     char letter;
     vector<int>rank(127, 0); //printable character in asscii code;
@@ -91,6 +92,28 @@ Node * Huffman::constructTree(vector<Node *> charNode){
    return min_heap.top();
 }
 
+int binaryToDecimal(string bin){
+    int number = 0;
+    for(int i=0, j=(int)bin.size()-1; i<(int)bin.size(); ++i, j--){
+        if(bin[i] == '1')
+            number += (1<<j);
+    }
+    return number;
+}
+
+string decimalToBinary(int number){
+    string bin = "";
+    for(int i=0, j=7; i<8; i++, j--){
+        if((1<<j) <= number){
+            number -= (1<<j);
+            bin += '1';
+        } else {
+            bin += '0';
+        }
+        return bin;
+    }
+}
+
 void Huffman::constructTable(Node * currNode, string binCode){
     /*
     * CHECK IF THE RIGHT AND LEFT NODES ARE NULL
@@ -112,10 +135,11 @@ void Huffman::constructTable(Node * currNode, string binCode){
 void Huffman::compress(string fileName){
     /*
     * open the file
-    * get the codefor correspond caracter
-    * if the code is not 8 bit append the next character
+    * get the code for correspond caracter
+    * if the code is not 8 bit change it to character
     * check if the last byte is complete or not 
-    * if not append 0
+    * if not append 0 then add to buffer
+    * add buffer to file encode.bin
     */
 
     freopen(fileName.c_str(), "r", stdin);
@@ -127,11 +151,13 @@ void Huffman::compress(string fileName){
 
     char let;
     string bits = "";
+    string buffer = "";
+
     while(scanf("%c", &let) != EOF){
         for(int i=0; i<(int)generatedTable[let].size(); ++i){
             bits += generatedTable[let][i];
-            if((int)bits.size() == 8){
-                encode.write((char*) &bits, sizeof(char));
+            if((int)bits.size() % 8 == 0){
+                buffer += char(binaryToDecimal(bits));
                 bits = "";
             }
         }        
@@ -140,18 +166,57 @@ void Huffman::compress(string fileName){
     if((int)bits.size() < 8 && (int)bits.size() != 0){
         while((int)bits.size() != 8){
             bits += "0";
-        }
-        encode.write((char*) &bits, sizeof(char));
+            ++this->extraBit;
+        }        
+        buffer += char(binaryToDecimal(bits));
         bits = "";
     }  
+    encode.write(buffer.c_str(), buffer.size());
     encode.close();
     fclose(stdin);
     cout << "COMPRESSED" << endl;
-    //decompress();
+    decompress();
 }
 
 void Huffman::decompress(){
     //TODO
+    /*
+    * read from encoded file
+    * change the binary representation to character
+    * write in the output file.
+    */
+
+
+    char let;
+    string binCode = "";
+    string bufStr = "";
+
+    freopen("encode.bin", "r", stdin);
+    ofstream decode("decode.txt");
+    if(!decode){
+        cout << "ERROR WHILE OPENING The FILE" << endl;
+        exit(1);
+    }
+
+    while(scanf("%c", &let) != EOF){
+        bitset<8> bt = let;
+		binCode += bt.to_string();    
+    }
+    fclose(stdin);
+
+    for(int i=0; i<(int)binCode.size()-this->extraBit   ; i++){
+        bufStr += binCode[i];
+
+        for(auto itr : this->generatedTable){
+            if(bufStr == itr.second){
+                decode << itr.first;
+                bufStr = "";
+            }
+        }
+    }
+
+    decode.close();
+    cout << "DECOMPRESSED" << endl;
 }
 
 void Huffman::printGenTable(){
