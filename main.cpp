@@ -110,7 +110,44 @@ void Huffman::constructTable(Node * currNode, string binCode){
 
 
 void Huffman::compress(string fileName){
-    //TODO
+    /*
+    * open the file
+    * get the codefor correspond caracter
+    * if the code is not 8 bit append the next character
+    * check if the last byte is complete or not 
+    * if not append 0
+    */
+
+    freopen(fileName.c_str(), "r", stdin);
+    ofstream encode("encode.bin", ios::out | ios::binary);
+    if(!encode){
+        cout << "Cannot open file" << endl;
+        exit(1);
+    }
+
+    char let;
+    string bits = "";
+    while(scanf("%c", &let) != EOF){
+        for(int i=0; i<(int)generatedTable[let].size(); ++i){
+            bits += generatedTable[let][i];
+            if((int)bits.size() == 8){
+                encode.write((char*) &bits, sizeof(char));
+                bits = "";
+            }
+        }        
+    }
+
+    if((int)bits.size() < 8 && (int)bits.size() != 0){
+        while((int)bits.size() != 8){
+            bits += "0";
+        }
+        encode.write((char*) &bits, sizeof(char));
+        bits = "";
+    }  
+    encode.close();
+    fclose(stdin);
+    cout << "COMPRESSED" << endl;
+    //decompress();
 }
 
 void Huffman::decompress(){
@@ -124,7 +161,6 @@ void Huffman::printGenTable(){
 }
 
 int main(int argc, char *argv[]){
-    Huffman obj("test.txt"); 
-    obj.printGenTable();
+    Huffman obj("testdata.txt"); 
     return 0;
 }
