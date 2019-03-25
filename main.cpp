@@ -23,7 +23,7 @@ void Node::combine(Node * &leftNode, Node * &rightNode){
     this->rank = leftNode->getRank()+rightNode->getRank();
 }
 
-Huffman::Huffman(string fileName){
+Huffman::Huffman(string fileName, string tag){
     /*
     * read data from a file
     * count how many repetition letters are there
@@ -32,28 +32,31 @@ Huffman::Huffman(string fileName){
     * construct table which contains the letter with binCode
     * compress the file 
     */
+    if(tag == "-c"){
+        this->extraBit = 0;
+        freopen(fileName.c_str(), "r", stdin);
+        char letter;
+        vector<int>rank(127, 0); //printable character in asscii code;
+        vector<Node * > charNode;
 
-    this->extraBit = 0;
-    freopen(fileName.c_str(), "r", stdin);
-    char letter;
-    vector<int>rank(127, 0); //printable character in asscii code;
-    vector<Node * > charNode;
-
-    while(scanf("%c", &letter) != EOF){
-        ++rank[int(letter)];
-    }
-    fclose(stdin);
-
-    for(int i=START_POINT; i<END_POINT; ++i){
-        if(rank[i] > 0){
-            Node * newNode = new Node(rank[i], char(i));
-            charNode.push_back(newNode);
+        while(scanf("%c", &letter) != EOF){
+            ++rank[int(letter)];
         }
-    }
+        fclose(stdin);
 
-    this->root = constructTree(charNode);
-    this->constructTable(this->root, "");
-    this->compress(fileName);
+        for(int i=START_POINT; i<END_POINT; ++i){
+            if(rank[i] > 0){
+                Node * newNode = new Node(rank[i], char(i));
+                charNode.push_back(newNode);
+            }
+        }
+
+        this->root = constructTree(charNode);
+        this->constructTable(this->root, "");
+        this->compress(fileName);
+    } else if(tag == "-d"){
+        decompress(fileName);
+    }
 }
 
 bool compareRank(Node * firstNode, Node * secondNode){
@@ -110,8 +113,8 @@ string decimalToBinary(int number){
         } else {
             bin += '0';
         }
-        return bin;
     }
+    return bin;
 }
 
 void Huffman::constructTable(Node * currNode, string binCode){
@@ -131,8 +134,14 @@ void Huffman::constructTable(Node * currNode, string binCode){
     return;
 }
 
+string checkbits(string bits){
+    while((int)bits.size() % 8 != 0){
+        bits+="0";
+    }
+    return bits;
+}
 
-void Huffman::compress(string fileName){
+void Huffman::compress(string origionalFile){
     /*
     * open the file
     * get the code for correspond caracter
@@ -141,8 +150,27 @@ void Huffman::compress(string fileName){
     * if not append 0 then add to buffer
     * add buffer to file encode.bin
     */
+    string key_size_bin="";
+    string header = "";
 
-    freopen(fileName.c_str(), "r", stdin);
+    for(int i=START_POINT; i<END_POINT; ++i){
+        key_size_bin += decimalToBinary(i);
+
+        if(generatedTable.find(char(i)) != generatedTable.end()){
+            string binCode = generatedTable[char(i)];
+            key_size_bin += decimalToBinary((int)binCode.size())+checkbits(binCode);
+        }
+        else
+            key_size_bin += decimalToBinary(0);
+
+        //change all binary bits to bytes
+        for(int j=0; j<(int)key_size_bin.size(); j+=8){
+            header += char(binaryToDecimal(key_size_bin.substr(j, 8)));
+        }
+        key_size_bin = "";
+    }
+
+    freopen(origionalFile.c_str(), "r", stdin);
     ofstream encode("encode.bin", ios::out | ios::binary);
     if(!encode){
         cout << "Cannot open file" << endl;
@@ -151,7 +179,7 @@ void Huffman::compress(string fileName){
 
     char let;
     string bits = "";
-    string buffer = "";
+    string buffer = header;
 
     while(scanf("%c", &let) != EOF){
         for(int i=0; i<(int)generatedTable[let].size(); ++i){
@@ -175,11 +203,9 @@ void Huffman::compress(string fileName){
     encode.close();
     fclose(stdin);
     cout << "COMPRESSED" << endl;
-    decompress();
 }
 
-void Huffman::decompress(){
-    //TODO
+void Huffman::decompress(string encodedFile){
     /*
     * read from encoded file
     * change the binary representation to character
@@ -191,7 +217,7 @@ void Huffman::decompress(){
     string binCode = "";
     string bufStr = "";
 
-    freopen("encode.bin", "r", stdin);
+    freopen(encodedFile.c_str(), "r", stdin);
     ofstream decode("decode.txt");
     if(!decode){
         cout << "ERROR WHILE OPENING The FILE" << endl;
@@ -204,14 +230,36 @@ void Huffman::decompress(){
     }
     fclose(stdin);
 
-    for(int i=0; i<(int)binCode.size()-this->extraBit   ; i++){
+
+    /*
+    * Read the header
+    * Make map based on this header
+    */
+    int counter = 0;
+    for(int i=0; i<95; i++){
+        char key = char(binaryToDecimal(binCode.substr(counter, 8)));//first 8 bits
+        int size = binaryToDecimal(binCode.substr(counter+8, 8)); //second 8 bits
+        string binRep = binCode.substr(counter+16, size); //store binary representation for a character
+        counter += 16+size;
+        while(counter % 8 != 0) ++counter;
+        if(size != 0)
+            decompressTable[binRep] = key;
+    }
+
+    binCode = binCode.substr(counter, int(binCode.size())-counter);
+    
+    //make binCode size divisible by 8
+    while(int(binCode.size()) % 8 != 0){
+        ++this->extraBit;
+        binCode += "0";
+    }
+
+    for(int i=0; i<(int)binCode.size()-this->extraBit; i++){
         bufStr += binCode[i];
 
-        for(auto itr : this->generatedTable){
-            if(bufStr == itr.second){
-                decode << itr.first;
-                bufStr = "";
-            }
+        if(decompressTable.find(bufStr) != decompressTable.end()){
+            decode << decompressTable[bufStr];
+            bufStr = "";
         }
     }
 
@@ -226,6 +274,12 @@ void Huffman::printGenTable(){
 }
 
 int main(int argc, char *argv[]){
-    Huffman obj("testdata.txt"); 
+    if(argc != 3 || (argc == 3 && (string(argv[1]) != "-c" && string(argv[1]) != "-d"))){
+        printf("[-] HELP:\n");
+        printf("To Compress: %s -c <FILE-NAME>\n", string(argv[0]).c_str());
+        printf("To Decompress: %s -d <FILE-NAME>\n", string(argv[0]).c_str());
+    } else{
+        Huffman huf(argv[2], argv[1]);
+    }
     return 0;
 }

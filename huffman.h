@@ -27,13 +27,14 @@ class Huffman{
     private:
         Node * root;
         map<char, string>generatedTable;
+        map<string, char>decompressTable;
         int extraBit;
 
     public:
-        Huffman(string fileName);
+        Huffman(string fileName, string tag);
         Node * constructTree(vector<Node *> charNode);
         void constructTable(Node * currNode, string binCode);
-        void compress(string fileName);
+        void compress(string origionalFile);
         void printGenTable();
-        void decompress();
+        void decompress(string encodedFile);
 };
