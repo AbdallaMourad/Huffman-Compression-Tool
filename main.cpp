@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 #include "huffman.h"
 
-#define START_POINT 32
+#define START_POINT 0
 #define END_POINT 127
 
 using namespace std;
@@ -33,7 +33,6 @@ Huffman::Huffman(string fileName, string tag){
     * compress the file 
     */
     if(tag == "-c"){
-        this->extraBit = 0;
         freopen(fileName.c_str(), "r", stdin);
         char letter;
         vector<int>rank(127, 0); //printable character in asscii code;
@@ -167,7 +166,7 @@ void Huffman::compress(string origionalFile){
         for(int j=0; j<(int)key_size_bin.size(); j+=8){
             header += char(binaryToDecimal(key_size_bin.substr(j, 8)));
         }
-        key_size_bin = "";
+        key_size_bin = ""; 
     }
 
     freopen(origionalFile.c_str(), "r", stdin);
@@ -180,25 +179,29 @@ void Huffman::compress(string origionalFile){
     char let;
     string bits = "";
     string buffer = header;
+    string bitBuff = ""; //save the content of file
 
     while(scanf("%c", &let) != EOF){
         for(int i=0; i<(int)generatedTable[let].size(); ++i){
             bits += generatedTable[let][i];
             if((int)bits.size() % 8 == 0){
-                buffer += char(binaryToDecimal(bits));
+                bitBuff += char(binaryToDecimal(bits));
                 bits = "";
             }
         }        
     }
-
     if((int)bits.size() < 8 && (int)bits.size() != 0){
+        //add the size of extra bit after the header.
+        buffer += char(8 - int(bits.size()));
         while((int)bits.size() != 8){
             bits += "0";
-            ++this->extraBit;
         }        
-        buffer += char(binaryToDecimal(bits));
+        bitBuff += char(binaryToDecimal(bits));
         bits = "";
-    }  
+    } 
+    //append the content of file.
+    buffer += bitBuff;
+
     encode.write(buffer.c_str(), buffer.size());
     encode.close();
     fclose(stdin);
@@ -211,7 +214,6 @@ void Huffman::decompress(string encodedFile){
     * change the binary representation to character
     * write in the output file.
     */
-
 
     char let;
     string binCode = "";
@@ -236,7 +238,7 @@ void Huffman::decompress(string encodedFile){
     * Make map based on this header
     */
     int counter = 0;
-    for(int i=0; i<95; i++){
+    for(int i=START_POINT; i<END_POINT; i++){
         char key = char(binaryToDecimal(binCode.substr(counter, 8)));//first 8 bits
         int size = binaryToDecimal(binCode.substr(counter+8, 8)); //second 8 bits
         string binRep = binCode.substr(counter+16, size); //store binary representation for a character
@@ -246,15 +248,13 @@ void Huffman::decompress(string encodedFile){
             decompressTable[binRep] = key;
     }
 
-    binCode = binCode.substr(counter, int(binCode.size())-counter);
-    
-    //make binCode size divisible by 8
-    while(int(binCode.size()) % 8 != 0){
-        ++this->extraBit;
-        binCode += "0";
-    }
+    int extraBit = binaryToDecimal(binCode.substr(counter, 8));
+    counter += 8;
 
-    for(int i=0; i<(int)binCode.size()-this->extraBit; i++){
+    binCode = binCode.substr(counter, int(binCode.size())-counter);
+
+    //add extraBits to the end of header.   
+    for(int i=0; i<(int)binCode.size()-extraBit; i++){
         bufStr += binCode[i];
 
         if(decompressTable.find(bufStr) != decompressTable.end()){
