@@ -2,7 +2,7 @@
 #include "huffman.h"
 
 #define START_POINT 0
-#define END_POINT 127
+#define END_POINT 255
 
 using namespace std;
 
@@ -35,7 +35,7 @@ Huffman::Huffman(string fileName, string tag){
     if(tag == "-c"){
         freopen(fileName.c_str(), "r", stdin);
         char letter;
-        vector<int>rank(127, 0); //printable character in asscii code;
+        vector<int>rank(END_POINT, 0); //all character in asscii code;
         vector<Node * > charNode;
 
         while(scanf("%c", &letter) != EOF){
