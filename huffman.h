@@ -30,10 +30,10 @@ class Huffman{
         map<string, char>decompressTable;
 
     public:
-        Huffman(string fileName, string tag);
+        Huffman(string filename, string newFilename, string tag);
         Node * constructTree(vector<Node *> charNode);
         void constructTable(Node * currNode, string binCode);
-        void compress(string origionalFile);
+        void compress(string origionalFile, string newFilename);
         void printGenTable();
-        void decompress(string encodedFile);
+        void decompress(string encodedFile, string newFilename);
 };

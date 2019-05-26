@@ -23,7 +23,7 @@ void Node::combine(Node * &leftNode, Node * &rightNode){
     this->rank = leftNode->getRank()+rightNode->getRank();
 }
 
-Huffman::Huffman(string fileName, string tag){
+Huffman::Huffman(string filename, string newFilename, string tag){
     /*
     * read data from a file
     * count how many repetition letters are there
@@ -33,7 +33,7 @@ Huffman::Huffman(string fileName, string tag){
     * compress the file 
     */
     if(tag == "-c"){
-        freopen(fileName.c_str(), "r", stdin);
+        freopen(filename.c_str(), "r", stdin);
         char letter;
         vector<int>rank(END_POINT, 0); //all character in asscii code;
         vector<Node * > charNode;
@@ -52,9 +52,9 @@ Huffman::Huffman(string fileName, string tag){
 
         this->root = constructTree(charNode);
         this->constructTable(this->root, "");
-        this->compress(fileName);
+        this->compress(filename, newFilename);
     } else if(tag == "-d"){
-        decompress(fileName);
+        decompress(filename, newFilename);
     }
 }
 
@@ -140,7 +140,7 @@ string checkbits(string bits){
     return bits;
 }
 
-void Huffman::compress(string origionalFile){
+void Huffman::compress(string origionalFile, string newFilename){
     /*
     * open the file
     * get the code for correspond caracter
@@ -170,7 +170,7 @@ void Huffman::compress(string origionalFile){
     }
 
     freopen(origionalFile.c_str(), "r", stdin);
-    ofstream encode("encode.bin", ios::out | ios::binary);
+    ofstream encode(newFilename, ios::out | ios::binary);
     if(!encode){
         cout << "Cannot open file" << endl;
         exit(1);
@@ -208,7 +208,7 @@ void Huffman::compress(string origionalFile){
     cout << "COMPRESSED" << endl;
 }
 
-void Huffman::decompress(string encodedFile){
+void Huffman::decompress(string encodedFile, string newFilename){
     /*
     * read from encoded file
     * change the binary representation to character
@@ -220,7 +220,7 @@ void Huffman::decompress(string encodedFile){
     string bufStr = "";
 
     freopen(encodedFile.c_str(), "r", stdin);
-    ofstream decode("decode.txt");
+    ofstream decode(newFilename);
     if(!decode){
         cout << "ERROR WHILE OPENING The FILE" << endl;
         exit(1);
@@ -274,12 +274,12 @@ void Huffman::printGenTable(){
 }
 
 int main(int argc, char *argv[]){
-    if(argc != 3 || (argc == 3 && (string(argv[1]) != "-c" && string(argv[1]) != "-d"))){
+    if(argc != 4 || (argc == 4 && (string(argv[1]) != "-c" && string(argv[1]) != "-d"))){
         printf("[-] HELP:\n");
-        printf("To Compress: %s -c <FILE-NAME>\n", string(argv[0]).c_str());
-        printf("To Decompress: %s -d <FILE-NAME>\n", string(argv[0]).c_str());
+        printf("To Compress: %s -c <FILE-NAME> <NEW-FILE-NAME.bin>\n", string(argv[0]).c_str());
+        printf("To Decompress: %s -d <FILE-NAME> <NEW-FILE-NAME.txt>\n", string(argv[0]).c_str());
     } else{
-        Huffman huf(argv[2], argv[1]);
+        Huffman huf(argv[2], argv[3], argv[1]);
     }
     return 0;
 }
