@@ -3,5 +3,5 @@
 
 
 ### Usage
-     Compress:     ./<progrma-name> -c <filename.txt>
-     Decompress:   ./<program-name> -d <encode.bin>
+     Compress:     ./<huffman> -c <FILENAME.txt> <NEW-FILE-NAME.bin>
+     Decompress:   ./<huffman> -d <FILE-NAME.bin> <NEW-FILE-NAME.txt>
