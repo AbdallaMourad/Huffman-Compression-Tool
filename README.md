@@ -1,4 +1,4 @@
-# Text-Compression-Tool
+# Huffman-Compression-Tool
      Huffman Text Compression tool
 
 
