@@ -3,5 +3,5 @@
 
 
 ### Usage
-     Compress:     ./<huffman> -c <FILENAME.txt> <NEW-FILE-NAME.bin>
-     Decompress:   ./<huffman> -d <FILE-NAME.bin> <NEW-FILE-NAME.txt>
+     Compress:     ./<huffman> -c <INTENDED_FILE_PATH> <TARGET_FILE_PATH>
+     Decompress:   ./<huffman> -d <INTENDED_FILE_PATH> <TARGET_FILE_PATH>
